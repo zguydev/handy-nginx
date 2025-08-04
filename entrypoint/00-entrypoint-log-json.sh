@@ -54,17 +54,22 @@ entrypoint_log() {
         *)            level="$default_level" ;;
     esac
 
+    # ISO 8601 UTC timestamp (without microseconds)
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
     if [ -n "$script_name" ]; then
         jq -c -M -n \
             --arg level "$level" \
             --arg body "$body" \
             --arg script_name "$script_name" \
-            '{level: $level, body: $body, script_name: $script_name}'
+            --arg timestamp "$timestamp" \
+            '{timestamp: $timestamp, level: $level, body: $body, script_name: $script_name}'
     else
         jq -c -M -n \
             --arg level "$level" \
             --arg body "$body" \
-            '{level: $level, body: $body}'
+            --arg timestamp "$timestamp" \
+            '{timestamp: $timestamp, level: $level, body: $body}'
     fi
 }
 EOF
