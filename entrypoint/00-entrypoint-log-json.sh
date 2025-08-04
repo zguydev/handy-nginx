@@ -5,12 +5,17 @@
 # entrypoint scripts to JSON logging format.
 #------------------------------------------------------------------------------
 
-set -euo pipefail
+set -eu
 
 LC_ALL=C
 ME=$(basename "$0")
 
 [ "${NGINX_ENTRYPOINT_JSON_LOGGING:-}" ] || exit 0
+
+command -v jq >/dev/null 2>&1 || {
+    entrypoint_log "$ME: ERROR: jq not found, JSON logging is skipped"
+    exit 0
+}
 
 entrypoint_log_json_function="$(cat <<'EOF'
 entrypoint_log() {

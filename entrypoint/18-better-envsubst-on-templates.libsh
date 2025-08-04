@@ -5,7 +5,7 @@
 # It is not executed by itself.
 #------------------------------------------------------------------------------
 
-set -euo pipefail
+set -eu
 
 LC_ALL=C
 ME=$(basename "$0")
@@ -20,7 +20,7 @@ add_stream_block() {
     local conffile="/etc/nginx/nginx.conf"
 
     if grep -q -E "\s*stream\s*\{" "$conffile"; then
-        entrypoint_log "$ME: $conffile contains a stream block; include $stream_output_dir/*.conf to enable stream templates"
+        entrypoint_log "$ME: INFO: $conffile contains a stream block; include $stream_output_dir/*.conf to enable stream templates"
     else
         # check if the file can be modified, e.g. not on a r/o filesystem
         touch "$conffile" 2>/dev/null || { entrypoint_log "$ME: INFO: Can not modify $conffile (read-only file system?)"; return 0; }
@@ -38,7 +38,7 @@ add_include_sites_available_block() {
     local conffile="/etc/nginx/nginx.conf"
 
     if grep -q -E "\s*include\s*/etc/nginx/sites-enabled/" "$conffile"; then
-        entrypoint_log "$ME: $conffile contains a sites-available block; include $sites_available_output_dir/*.conf to enable sites"
+        entrypoint_log "$ME: INFO: $conffile contains a sites-available block; include $sites_available_output_dir/*.conf to enable sites"
     else
         # check if the file can be modified, e.g. not on a r/o filesystem
         touch "$conffile" 2>/dev/null || { entrypoint_log "$ME: INFO: Can not modify $conffile (read-only file system?)"; return 0; }
@@ -77,7 +77,7 @@ better_envsubst_dir() {
     local output_dir="$2"
 
     if [ ! -d "$target_template_dir" ]; then
-        entrypoint_log "$ME: INFO: $target_template_dir does not exist"
+        entrypoint_log "$ME: WARN: $target_template_dir does not exist"
         return 0
     fi
 

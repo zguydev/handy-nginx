@@ -7,6 +7,11 @@
 # from the entrypoint directory.
 #------------------------------------------------------------------------------
 
+set -eu
+
+LC_ALL=C
+ME=$(basename "$0")
+
 . /docker-entrypoint.d/18-better-envsubst-on-templates.libsh
 
 better_auto_envsubst() {

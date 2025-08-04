@@ -7,7 +7,7 @@
 # names to remove.
 #------------------------------------------------------------------------------
 
-set -euo pipefail
+set -eu
 
 LC_ALL=C
 ME=$(basename "$0")
@@ -32,7 +32,7 @@ remove_entrypoint_scripts() {
         full_path="$entrypoint_dir/$script"
 
         if [ -f "$full_path" ]; then
-            entrypoint_log "$ME: Removing $full_path"
+            entrypoint_log "$ME: INFO: Removing $full_path"
             if ! rm -f "$full_path"; then
                 entrypoint_log "$ME: ERROR: Failed to remove $full_path"
             fi
