@@ -147,7 +147,7 @@ autoreload_watcher() {
         return 0
     }
 
-    if [ ! -f "$watch_env_file"]; then
+    if [ ! -f "$watch_env_file" ]; then
         entrypoint_log "$ME: WARN: Watch env file $watch_env_file does not exist"
         return 0
     fi
