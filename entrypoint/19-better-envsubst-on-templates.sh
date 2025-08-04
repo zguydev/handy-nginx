@@ -36,7 +36,7 @@ better_auto_envsubst() {
         if [ ! -w "$nginx_conf_output" ]; then
             entrypoint_log "$ME: ERROR: $nginx_conf_template exists, but $nginx_conf_output is not writable"
         else
-            if [ ! -z "${NGINX_ENVSUBST_IGNORE_NGINX_CONF_TEMPLATE_AT_START:-}" ]; then
+            if [ -z "${NGINX_ENVSUBST_IGNORE_NGINX_CONF_TEMPLATE_AT_START:-}" ]; then
                 entrypoint_log "$ME: Running envsubst on $nginx_conf_template to $nginx_conf_output"
                 better_envsubst_file "$nginx_conf_template" "$nginx_conf_output"
             else
