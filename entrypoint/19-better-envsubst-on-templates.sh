@@ -19,12 +19,12 @@ better_auto_envsubst() {
     local conf_template_dir="${template_dir}/conf.d"
     local stream_template_dir="${template_dir}/stream-conf.d"
     local sites_available_template_dir="${template_dir}/sites-available"
-    local main_template="${template_dir}/main/nginx.conf"
+    local main_template_file="${template_dir}/main/nginx.conf"
     local conf_output_dir="${NGINX_ENVSUBST_OUTPUT_DIR:-/etc/nginx/conf.d}"
     local stream_output_dir="${NGINX_ENVSUBST_STREAM_OUTPUT_DIR:-/etc/nginx/stream-conf.d}"
     local sites_available_output_dir="${NGINX_ENVSUBST_SITES_AVAILABLE_OUTPUT_DIR:-/etc/nginx/sites-available}"
     local sites_enabled_output_dir="${NGINX_ENVSUBST_SITES_ENABLED_OUTPUT_DIR:-/etc/nginx/sites-enabled}"
-    local main_output="/etc/nginx/nginx.conf"
+    local main_output_file="/etc/nginx/nginx.conf"
     local template_filename_pattern='*.conf'
 
     if [ ! -d "$template_dir" ]; then
@@ -32,15 +32,15 @@ better_auto_envsubst() {
         return 0
     fi
 
-    if [ -f "$main_template" ]; then
-        if [ ! -w "$main_output" ]; then
-            entrypoint_log "$ME: ERROR: $main_template exists, but $main_output is not writable"
+    if [ -f "$main_template_file" ]; then
+        if [ ! -w "$main_output_file" ]; then
+            entrypoint_log "$ME: ERROR: $main_template_file exists, but $main_output_file is not writable"
         else
             if [ -z "${NGINX_ENVSUBST_IGNORE_NGINX_CONF_TEMPLATE_AT_START:-}" ]; then
-                entrypoint_log "$ME: Running envsubst on $main_template to $main_output"
-                better_envsubst_file "$main_template" "$main_output"
+                entrypoint_log "$ME: Running envsubst on $main_template_file to $main_output_file"
+                better_envsubst_file "$main_template_file" "$main_output_file"
             else
-                entrypoint_log "$ME: INFO: envsubst on $main_template was ignored at start"
+                entrypoint_log "$ME: INFO: envsubst on $main_template_file was ignored at start"
             fi
         fi
     fi
@@ -58,7 +58,7 @@ better_auto_envsubst() {
         better_envsubst_dir "$sites_available_template_dir" "$sites_available_output_dir"
         update_sites_enabled_symlinks
 
-        if [ -w "$main_output" ]; then
+        if [ -w "$main_output_file" ]; then
             add_include_sites_available_block
         fi
     fi
