@@ -56,6 +56,22 @@ add_include_sites_available_block() {
     fi
 }
 
+load_watch_env_file() {
+    [ ! -f "$watch_env_file" ] && return 0
+
+    local key value
+    while IFS='=' read -r key value; do
+        # skip blank lines and comments
+        [ -z "$key" ] && continue
+        case "$key" in \#*) continue ;; esac
+
+        # validate key
+        if printf '%s\n' "$key" | grep -qE '^[A-Za-z_][A-Za-z0-9_]*$'; then
+            export "$key=$value"
+        fi
+    done < "$watch_env_file"
+}
+
 better_envsubst_file() {
     local original_full_conf_path="$1"
     local output_conf_path="$2"

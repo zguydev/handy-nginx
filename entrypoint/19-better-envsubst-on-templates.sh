@@ -26,42 +26,51 @@ better_auto_envsubst() {
     local sites_enabled_output_dir="${NGINX_ENVSUBST_SITES_ENABLED_OUTPUT_DIR:-/etc/nginx/sites-enabled}"
     local main_output_file="/etc/nginx/nginx.conf"
     local template_filename_pattern='*.conf'
+    local watch_env_file="${NGINX_ENVSUBST_WATCH_ENV_FILE:-/mount/nginx.env}"
 
     if [ ! -d "$template_dir" ]; then
-        entrypoint_log "$ME: ERROR: $template_dir does not exist"
+        entrypoint_log "$ME: ERROR: Template directory $template_dir does not exist"
         return 0
     fi
 
-    if [ -f "$main_template_file" ]; then
-        if [ ! -w "$main_output_file" ]; then
-            entrypoint_log "$ME: ERROR: $main_template_file exists, but $main_output_file is not writable"
-        else
-            if [ -z "${NGINX_ENVSUBST_IGNORE_NGINX_CONF_TEMPLATE_AT_START:-}" ]; then
-                entrypoint_log "$ME: Running envsubst on $main_template_file to $main_output_file"
-                better_envsubst_file "$main_template_file" "$main_output_file"
+    if [ ! -f "$watch_env_file"]; then
+        entrypoint_log "$ME: WARN: Watch env file $watch_env_file does not exist"
+        return 0
+    fi
+
+    (
+        load_watch_env_file
+        if [ -f "$main_template_file" ]; then
+            if [ ! -w "$main_output_file" ]; then
+                entrypoint_log "$ME: ERROR: $main_template_file exists, but $main_output_file is not writable"
             else
-                entrypoint_log "$ME: INFO: envsubst on $main_template_file was ignored at start"
+                if [ -z "${NGINX_ENVSUBST_IGNORE_NGINX_CONF_TEMPLATE_AT_START:-}" ]; then
+                    entrypoint_log "$ME: Running envsubst on $main_template_file to $main_output_file"
+                    better_envsubst_file "$main_template_file" "$main_output_file"
+                else
+                    entrypoint_log "$ME: INFO: envsubst on $main_template_file was ignored at start"
+                fi
             fi
         fi
-    fi
 
-    if test -n "$(find "$conf_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
-        better_envsubst_dir "$conf_template_dir" "$conf_output_dir"
-    fi
-
-    if test -n "$(find "$stream_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
-        better_envsubst_dir "$stream_template_dir" "$stream_output_dir"
-        add_stream_block
-    fi
-
-    if test -n "$(find "$sites_available_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
-        better_envsubst_dir "$sites_available_template_dir" "$sites_available_output_dir"
-        update_sites_enabled_symlinks
-
-        if [ -w "$main_output_file" ]; then
-            add_include_sites_available_block
+        if test -n "$(find "$conf_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
+            better_envsubst_dir "$conf_template_dir" "$conf_output_dir"
         fi
-    fi
+
+        if test -n "$(find "$stream_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
+            better_envsubst_dir "$stream_template_dir" "$stream_output_dir"
+            add_stream_block
+        fi
+
+        if test -n "$(find "$sites_available_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
+            better_envsubst_dir "$sites_available_template_dir" "$sites_available_output_dir"
+            update_sites_enabled_symlinks
+
+            if [ -w "$main_output_file" ]; then
+                add_include_sites_available_block
+            fi
+        fi
+    )
 }
 
 better_auto_envsubst

@@ -4,6 +4,8 @@
 # This entrypoint script runs an autoreload watcher in background that watches
 # for templates to have changes in runtime.
 # If any template has a modification, all templates will be updated.
+# If env watch file exists, environment variables will be dynamically
+# loaded and unloaded on every change.
 #------------------------------------------------------------------------------
 
 set -eu
@@ -56,13 +58,16 @@ auto_sync_files_in_dir() {
 sync_templates() {
     entrypoint_log "$ME: INFO: Syncing NGINX templates..."
 
-    auto_sync_files_in_dir "$conf_template_dir" "$conf_output_dir"
-    auto_sync_files_in_dir "$stream_template_dir" "$stream_output_dir"
-    auto_sync_files_in_dir "$sites_available_template_dir" "$sites_available_output_dir"
+    (
+        load_watch_env_file
+        auto_sync_files_in_dir "$conf_template_dir" "$conf_output_dir"
+        auto_sync_files_in_dir "$stream_template_dir" "$stream_output_dir"
+        auto_sync_files_in_dir "$sites_available_template_dir" "$sites_available_output_dir"
 
-    if [ -f "$main_template_file" ] && [ -w "$main_output_file" ]; then
-        better_envsubst_file "$main_template_file" "$main_output_file"
-    fi
+        if [ -f "$main_template_file" ] && [ -w "$main_output_file" ]; then
+            better_envsubst_file "$main_template_file" "$main_output_file"
+        fi
+    )
 }
 
 update_symlinks() {
@@ -126,9 +131,10 @@ autoreload_watcher() {
     local sites_enabled_output_dir="${NGINX_ENVSUBST_SITES_ENABLED_OUTPUT_DIR:-/etc/nginx/sites-enabled}"
     local main_output_file="/etc/nginx/nginx.conf"
     local template_filename_pattern='*.conf'
+    local watch_env_file="${NGINX_ENVSUBST_WATCH_ENV_FILE:-/mount/nginx.env}"
 
     if [ ! -d "$template_dir" ]; then
-        entrypoint_log "$ME: ERROR: $template_dir does not exist"
+        entrypoint_log "$ME: ERROR: Template directory $template_dir does not exist"
         return 0
     fi
 
@@ -136,6 +142,11 @@ autoreload_watcher() {
         entrypoint_log "$ME: ERROR: inotifywait not found, cannot start watcher"
         return 0
     }
+
+    if [ ! -f "$watch_env_file"]; then
+        entrypoint_log "$ME: WARN: Watch env file $watch_env_file does not exist"
+        return 0
+    fi
 
     set --
     [ -d "$conf_template_dir" ] && set -- "$@" "$conf_template_dir"
