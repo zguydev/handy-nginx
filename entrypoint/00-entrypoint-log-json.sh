@@ -89,7 +89,7 @@ replace_entrypoint_log_function() {
     rm -f "/tmp/entrypoint_log_json.tmp"
 }
 
-patch_entrypoint_scripts() {
+patch_entrypoint_scripts_logging() {
     local entrypoint_dir="/docker-entrypoint.d"
     if [ ! -w "$entrypoint_dir" ]; then
         entrypoint_log "$ME: ERROR: No write permission on $entrypoint_dir"
@@ -97,7 +97,7 @@ patch_entrypoint_scripts() {
     fi
 
     local self="$(realpath "$0")"
-    for file in $entrypoint_dir/*.sh $entrypoint_dir/*.envsh; do
+    for file in $entrypoint_dir/*sh; do
         [ -f "$file" ] || continue
 
         if [ "$(realpath "$file")" = "$self" ]; then
@@ -119,4 +119,4 @@ patch_entrypoint_scripts() {
     done
 }
 
-patch_entrypoint_scripts
+patch_entrypoint_scripts_logging
