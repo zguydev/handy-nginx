@@ -58,8 +58,11 @@ entrypoint_log() {
         *)            level="$default_level" ;;
     esac
 
-    # ISO 8601 UTC timestamp (without microseconds)
-    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    # ISO 8601 timestamp in local time (using TZ if defined)
+    timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
+
+    # Convert +hhmm to +hh:mm (ISO 8601 compliance)
+    timestamp="${timestamp%??}:${timestamp: -2}"
 
     if [ -n "$script_name" ]; then
         jq -c -M -n \
