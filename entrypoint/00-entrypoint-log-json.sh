@@ -29,7 +29,7 @@ entrypoint_log() {
     level=""
     body=""
 
-    # Parse into 3 parts
+    # parse into 3 parts
     num_colons=$(printf "%s" "$raw" | awk -F: '{print NF-1}')
     if [ "$num_colons" -ge 2 ]; then
         script_name=$(printf "%s" "$raw" | cut -d: -f1)
@@ -48,7 +48,7 @@ entrypoint_log() {
         level="$default_level"
     fi
 
-    # Normalize level
+    # normalize level
     level_uc=$(printf "%s" "$level" | tr '[:lower:]' '[:upper:]')
     case "$level_uc" in
         WARN|WARNING) level="WARN" ;;
@@ -61,8 +61,10 @@ entrypoint_log() {
     # ISO 8601 timestamp in local time (using TZ if defined)
     timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
-    # Convert +hhmm to +hh:mm (ISO 8601 compliance)
-    timestamp="${timestamp%??}:${timestamp: -2}"
+    # convert +hhmm to +hh:mm (ISO 8601 compliance)
+    offset=$(printf "%s" "$timestamp" | tail -c 6)
+    timestamp_base=$(printf "%s" "$timestamp" | head -c -5)
+    timestamp="${timestamp_base}${offset%??}:${offset#??}"
 
     if [ -n "$script_name" ]; then
         jq -c -M -n \
