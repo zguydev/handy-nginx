@@ -1,0 +1,108 @@
+#!/bin/sh
+# vim:sw=4:ts=4:sts=4:et
+#------------------------------------------------------------------------------
+# This script defines the better envsubst on templates library.
+# It is not executed by itself.
+#------------------------------------------------------------------------------
+
+set -euo pipefail
+
+LC_ALL=C
+ME=$(basename "$0")
+
+entrypoint_log() {
+    if [ -z "${NGINX_ENTRYPOINT_QUIET_LOGS:-}" ]; then
+        echo "$@"
+    fi
+}
+
+add_stream_block() {
+    local conffile="/etc/nginx/nginx.conf"
+
+    if grep -q -E "\s*stream\s*\{" "$conffile"; then
+        entrypoint_log "$ME: $conffile contains a stream block; include $stream_output_dir/*.conf to enable stream templates"
+    else
+        # check if the file can be modified, e.g. not on a r/o filesystem
+        touch "$conffile" 2>/dev/null || { entrypoint_log "$ME: INFO: Can not modify $conffile (read-only file system?)"; return 0; }
+        entrypoint_log "$ME: INFO: Appending stream block to $conffile to include $stream_output_dir/*.conf"
+        cat << END >> "$conffile"
+# added by "$ME" on "$(date)"
+stream {
+    include $stream_output_dir/*.conf;
+}
+END
+    fi
+}
+
+add_include_sites_available_block() {
+    local conffile="/etc/nginx/nginx.conf"
+
+    if grep -q -E "\s*include\s*/etc/nginx/sites-enabled/" "$conffile"; then
+        entrypoint_log "$ME: $conffile contains a sites-available block; include $sites_available_output_dir/*.conf to enable sites"
+    else
+        # check if the file can be modified, e.g. not on a r/o filesystem
+        touch "$conffile" 2>/dev/null || { entrypoint_log "$ME: INFO: Can not modify $conffile (read-only file system?)"; return 0; }
+        entrypoint_log "$ME: INFO: Appending sites-available block to $conffile to include $sites_available_output_dir/*.conf"
+        local include_line="    include /etc/nginx/sites-enabled/*.conf;"
+        awk '
+        BEGIN { in_http=0 }
+        /^\s*http\s*\{/ { in_http=1 }
+        in_http && /^\s*\}/ {
+            print "'"$include_line"'"
+            in_http=0
+        }
+        { print }
+        ' "$conffile" > "/tmp/nginx.conf.tmp" && mv "/tmp/nginx.conf.tmp" "$conffile"
+    fi
+}
+
+better_envsubst_file() {
+    local original_full_conf_path="$1"
+    local output_conf_path="$2"
+    local filter="${NGINX_ENVSUBST_FILTER:-X_}"
+
+    local output_dir=$(dirname "$output_conf_path")
+    if [ ! -d "$output_dir" ]; then
+        entrypoint_log "$ME: ERROR: $output_dir is not writable"
+        return 0
+    fi
+
+    local defined_envs
+    defined_envs=$(printf '${%s} ' $(awk "END { for (name in ENVIRON) { print ( name ~ /${filter}/ ) ? name : \"\" } }" < /dev/null ))
+    envsubst "$defined_envs" < "$original_full_conf_path" > "$output_conf_path"
+}
+
+better_envsubst_dir() {
+    local target_template_dir="$1"
+    local output_dir="$2"
+
+    if [ ! -d "$target_template_dir" ]; then
+        entrypoint_log "$ME: INFO: $target_template_dir does not exist"
+        return 0
+    fi
+
+    if [ ! -w "$output_dir" ]; then
+        entrypoint_log "$ME: ERROR: $target_template_dir exists, but $output_dir is not writable"
+        return 0
+    fi
+
+    local template relative_path output_path subdir
+    find "$target_template_dir" -follow -type f -name "$template_filename_pattern" -print | sort -V | while read -r template; do
+        relative_path="${template#"$target_template_dir/"}"
+        output_path="$output_dir/${relative_path}"
+        subdir=$(dirname "$relative_path")
+        mkdir -p "$output_dir/$subdir"
+        entrypoint_log "$ME: INFO: Running envsubst on $template to $output_path"
+        better_envsubst_file "$template" "$output_path"
+    done
+}
+
+update_sites_enabled_symlinks() {
+    if [ ! -w "$sites_enabled_output_dir" ]; then
+        entrypoint_log "$ME: ERROR: $sites_available_output_dir exists, but $sites_enabled_output_dir is not writable"
+        return 0
+    fi
+
+    entrypoint_log "$ME: INFO: Creating symbolic link from $sites_available_output_dir to $sites_enabled_output_dir"
+    find "$sites_available_output_dir" -name "$template_filename_pattern" -exec ln -sf {} "$sites_enabled_output_dir" \;
+}
