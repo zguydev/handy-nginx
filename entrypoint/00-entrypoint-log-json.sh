@@ -10,7 +10,11 @@ set -eu
 LC_ALL=C
 ME=$(basename "$0")
 
-[ "${NGINX_ENTRYPOINT_JSON_LOGGING:-}" ] || exit 0
+case "${NGINX_ENTRYPOINT_JSON_LOGGING:-}" in
+  "" | "0" | "false" | "False" | "FALSE" \
+  | "n" | "N" | "no" | "No" | "NO" \
+  | "off" | "Off" | "OFF") exit 0 ;;
+esac
 
 command -v jq >/dev/null 2>&1 || {
     entrypoint_log "$ME: ERROR: jq not found, JSON logging is skipped"

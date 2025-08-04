@@ -13,7 +13,11 @@ set -eu
 LC_ALL=C
 ME=$(basename "$0")
 
-[ "${NGINX_ENTRYPOINT_RELOAD_WATCHER:-}" ] || exit 0
+case "${NGINX_ENTRYPOINT_RELOAD_WATCHER:-}" in
+  "" | "0" | "false" | "False" | "FALSE" \
+  | "n" | "N" | "no" | "No" | "NO" \
+  | "off" | "Off" | "OFF") exit 0 ;;
+esac
 
 . /docker-entrypoint.d/18-better-envsubst-on-templates.libsh
 
