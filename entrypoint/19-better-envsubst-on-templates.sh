@@ -55,16 +55,16 @@ better_auto_envsubst() {
             fi
         fi
 
-        if test -n "$(find "$conf_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
+        if find "$conf_template_dir" -follow -type f -name "$template_filename_pattern" -quit >/dev/null 2>&1; then
             better_envsubst_dir "$conf_template_dir" "$conf_output_dir"
         fi
 
-        if test -n "$(find "$stream_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
+        if find "$stream_template_dir" -follow -type f -name "$template_filename_pattern" -quit >/dev/null 2>&1; then
             better_envsubst_dir "$stream_template_dir" "$stream_output_dir"
             add_stream_block
         fi
 
-        if test -n "$(find "$sites_available_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
+        if find "$sites_available_template_dir" -follow -type f -name "$template_filename_pattern" -quit >/dev/null 2>&1; then
             better_envsubst_dir "$sites_available_template_dir" "$sites_available_output_dir"
             update_sites_enabled_symlinks
 
@@ -73,7 +73,7 @@ better_auto_envsubst() {
             fi
         fi
 
-        if test -n "$(find "$common_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
+        if find "$common_template_dir" -follow -type f -name "$template_filename_pattern" -quit >/dev/null 2>&1; then
             better_envsubst_dir "$common_template_dir" "$common_output_dir"
         fi
     )

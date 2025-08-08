@@ -26,7 +26,8 @@ RUN chmod +x \
         /etc/nginx/templates/stream-conf.d \
         /etc/nginx/templates/sites-available \
         /etc/nginx/sites-available \
-        /etc/nginx/sites-enabled
+        /etc/nginx/sites-enabled \
+        /etc/nginx/common
 
 STOPSIGNAL SIGKILL
 
