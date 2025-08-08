@@ -94,22 +94,17 @@ update_symlinks() {
 try_reload_nginx() {
     entrypoint_log "$ME: INFO: Validating NGINX configuration..."
 
-    local nginx_test_output=$(nginx -t 2>&1)
-    local nginx_test_status=$?
-
-    if [ "$nginx_test_status" -ne 0 ]; then
-        entrypoint_log "$ME: WARN: nginx -t: $nginx_test_output"
+    local nginx_test_output_file="$(mktemp)" # bypasses the "bad number" error
+    { nginx -t >"$nginx_test_output_file" 2>&1; } || {
+        entrypoint_log "$ME: WARN: nginx -t: $(cat "$nginx_test_output_file")"
         entrypoint_log "$ME: WARN: [!!!] Configuration test failed, NGINX restart was skipped!"
         return 0
-    fi
+    }
 
-    entrypoint_log "$ME: INFO: nginx -t: $nginx_test_output"
+    entrypoint_log "$ME: INFO: nginx -t: $(cat "$nginx_test_output_file")"
     entrypoint_log "$ME: INFO: [v] Configuration is valid, restarting NGINX..."
 
-    local nginx_reload_output=$(nginx -s reload 2>&1)
-    local nginx_reload_status=$?
-
-    if [ "$nginx_reload_status" -eq 0 ]; then
+    if nginx_reload_output="$(nginx -s reload 2>&1)"; then
         entrypoint_log "$ME: INFO: nginx -s reload: $nginx_reload_output"
         entrypoint_log "$ME: INFO: NGINX reload complete"
     else
