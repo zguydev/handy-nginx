@@ -19,11 +19,13 @@ better_auto_envsubst() {
     local conf_template_dir="${template_dir}/conf.d"
     local stream_template_dir="${template_dir}/stream-conf.d"
     local sites_available_template_dir="${template_dir}/sites-available"
+    local common_template_dir="${template_dir}/common"
     local main_template_file="${template_dir}/main/nginx.conf"
     local conf_output_dir="${NGINX_ENVSUBST_OUTPUT_DIR:-/etc/nginx/conf.d}"
     local stream_output_dir="${NGINX_ENVSUBST_STREAM_OUTPUT_DIR:-/etc/nginx/stream-conf.d}"
     local sites_available_output_dir="${NGINX_ENVSUBST_SITES_AVAILABLE_OUTPUT_DIR:-/etc/nginx/sites-available}"
     local sites_enabled_output_dir="${NGINX_ENVSUBST_SITES_ENABLED_OUTPUT_DIR:-/etc/nginx/sites-enabled}"
+    local common_output_dir="${NGINX_ENVSUBST_COMMON_OUTPUT_DIR:-/etc/nginx/common}"
     local main_output_file="/etc/nginx/nginx.conf"
     local template_filename_pattern='*.conf'
     local watch_env_file="${NGINX_ENVSUBST_WATCH_ENV_FILE:-/mount/nginx.env}"
@@ -69,6 +71,10 @@ better_auto_envsubst() {
             if [ -w "$main_output_file" ]; then
                 add_include_sites_available_block
             fi
+        fi
+
+        if test -n "$(find "$common_template_dir" -follow -type f -name "$template_filename_pattern" -print -quit)"; then
+            better_envsubst_dir "$common_template_dir" "$common_output_dir"
         fi
     )
 }

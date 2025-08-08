@@ -67,6 +67,7 @@ sync_templates() {
         auto_sync_files_in_dir "$conf_template_dir" "$conf_output_dir"
         auto_sync_files_in_dir "$stream_template_dir" "$stream_output_dir"
         auto_sync_files_in_dir "$sites_available_template_dir" "$sites_available_output_dir"
+        auto_sync_files_in_dir "$common_template_dir" "$common_output_dir"
 
         if [ -f "$main_template_file" ] && [ -w "$main_output_file" ]; then
             better_envsubst_file "$main_template_file" "$main_output_file"
@@ -128,11 +129,13 @@ autoreload_watcher() {
     local conf_template_dir="${template_dir}/conf.d"
     local stream_template_dir="${template_dir}/stream-conf.d"
     local sites_available_template_dir="${template_dir}/sites-available"
+    local common_template_dir="${template_dir}/common"
     local main_template_file="${template_dir}/main/nginx.conf"
     local conf_output_dir="${NGINX_ENVSUBST_OUTPUT_DIR:-/etc/nginx/conf.d}"
     local stream_output_dir="${NGINX_ENVSUBST_STREAM_OUTPUT_DIR:-/etc/nginx/stream-conf.d}"
     local sites_available_output_dir="${NGINX_ENVSUBST_SITES_AVAILABLE_OUTPUT_DIR:-/etc/nginx/sites-available}"
     local sites_enabled_output_dir="${NGINX_ENVSUBST_SITES_ENABLED_OUTPUT_DIR:-/etc/nginx/sites-enabled}"
+    local common_output_dir="${NGINX_ENVSUBST_COMMON_OUTPUT_DIR:-/etc/nginx/common}"
     local main_output_file="/etc/nginx/nginx.conf"
     local template_filename_pattern='*.conf'
     local watch_env_file="${NGINX_ENVSUBST_WATCH_ENV_FILE:-/mount/nginx.env}"
@@ -156,6 +159,7 @@ autoreload_watcher() {
     [ -d "$conf_template_dir" ] && set -- "$@" "$conf_template_dir"
     [ -d "$stream_template_dir" ] && set -- "$@" "$stream_template_dir"
     [ -d "$sites_available_template_dir" ] && set -- "$@" "$sites_available_template_dir"
+    [ -d "$common_template_dir" ] && set -- "$@" "$common_template_dir"
     [ -f "$main_template_file" ] && set -- "$@" "$(dirname "$main_template_file")"
 
     if [ "$#" -eq 0 ]; then
