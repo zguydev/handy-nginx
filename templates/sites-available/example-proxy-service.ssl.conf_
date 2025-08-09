@@ -15,6 +15,9 @@ server {
     ssl_certificate_key  ssl/$server_name/privkey.pem;
 
     location /api/ {
+        #otel_trace      on;
+        #otel_span_name  "$request_method /api/";
+
         proxy_pass  http://example_service;
 
         include  common/proxy-params.conf;

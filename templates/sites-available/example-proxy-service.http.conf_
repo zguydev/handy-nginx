@@ -11,6 +11,9 @@ server {
     server_name  ${X_SERVER_NAME};
 
     location /api/ {
+        #otel_trace      on;
+        #otel_span_name  "$request_method /api/";
+
         proxy_pass  http://example_service;
 
         include  common/proxy-params.conf;
