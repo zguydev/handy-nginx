@@ -1,0 +1,17 @@
+# This config defines a stub status server.
+#
+# Required env vars: X_STUB_STATUS_SERVER_NAME.
+
+server {
+    listen       8080;
+    server_name  ${X_STUB_STATUS_SERVER_NAME};
+
+    location /status {
+        stub_status   on;
+        default_type  text/plain;
+        access_log    off;
+
+        # allow  127.0.0.1;
+        # deny   all;
+    }
+}
