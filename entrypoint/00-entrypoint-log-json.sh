@@ -30,7 +30,7 @@ entrypoint_log() {
     body=""
 
     # parse into 3 parts
-    num_colons=$(printf "%s" "$raw" | awk -F: '{print NF-1}')
+    num_colons=$(printf '%s' "$raw" | tr -cd ':' | wc -c | awk '{print $1}')
     if [ "$num_colons" -ge 2 ]; then
         script_name=$(printf "%s" "$raw" | cut -d: -f1)
         level=$(printf "%s" "$raw" | cut -d: -f2 | sed 's/^[[:space:]]*//')
@@ -58,13 +58,8 @@ entrypoint_log() {
         *)            level="$default_level" ;;
     esac
 
-    # ISO 8601 timestamp in local time (using TZ if defined)
-    timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
-
-    # convert +hhmm to +hh:mm (ISO 8601 compliance)
-    offset=$(printf "%s" "$timestamp" | tail -c 6)
-    timestamp_base=$(printf "%s" "$timestamp" | head -c -5)
-    timestamp="${timestamp_base}${offset%??}:${offset#??}"
+    # RFC3339 timestamp in local time (using TZ if defined)
+    timestamp=$(date +'%Y-%m-%dT%H:%M:%S%z' | sed -E 's/([+-][0-9]{2})([0-9]{2})$/\1:\2/')
 
     if [ -n "$script_name" ]; then
         jq -c -M -n \

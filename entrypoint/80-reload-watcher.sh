@@ -94,7 +94,6 @@ update_symlinks() {
 try_reload_nginx() {
     entrypoint_log "$ME: INFO: Validating NGINX configuration..."
 
-    # TODO: fix the bad number error that happens in this function for unknown reason
     if nginx_test_output="$(nginx -t 2>&1)"; then
         entrypoint_log "$ME: INFO: nginx -t: $nginx_test_output"
         entrypoint_log "$ME: INFO: [v] Configuration is valid, restarting NGINX..."
@@ -167,7 +166,7 @@ autoreload_watcher() {
     wait_for_nginx_start
 
     local DIR FILE EVENT full_path
-    inotifywait -m -e modify,create,delete,move --format '%w %f %e' "$@" |
+    inotifywait -m -e modify,create,delete,move --format '%w %f %e' "$@" 2>/dev/null |
     while IFS=' ' read -r DIR FILE EVENT; do
         full_path="${DIR%/}/$FILE"
 
