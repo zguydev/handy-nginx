@@ -1,0 +1,18 @@
+# This configuration defines the redirection of HTTP requests to HTTPS.
+#
+# Required env vars: X_SERVER_NAME.
+
+server {
+    listen       80;
+    server_name  ${X_SERVER_NAME};
+
+    location ^~ /.well-known/acme-challenge/ {
+        root          /var/www/certbot/;
+        default_type  "text/plain";
+        allow         all;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}

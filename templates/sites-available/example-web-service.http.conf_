@@ -1,0 +1,40 @@
+# This configuration defines an example web service with static content,
+# PHP FPM and PMA via HTTP.
+#
+# Required env vars: X_PHP_CGI_ADDR, X_PHPMYADMIN_ADDR, X_SERVER_NAME.
+
+upstream  example_php_cgi {
+    server  ${X_PHP_CGI_ADDR};
+}
+
+upstream  example_phpmyadmin {
+    server  ${X_PHPMYADMIN_ADDR};
+}
+
+server {
+    listen       80;
+    server_name  ${X_SERVER_NAME};
+
+    root  /var/www/html;
+
+    location ^~ /_dev/pma/ {
+        rewrite  ^/_dev/pma(/.*)$ $1 break;
+
+        proxy_pass  http://example_phpmyadmin/;
+
+        include  common/proxy-params.conf;
+    }
+
+    location ~ \.php$ {
+        include common/fastcgi-php.conf;
+    }
+
+    location / {
+        index      index.php index.html index.htm;
+        try_files  $uri $uri/ /index.php?$query_string;
+
+        include  /etc/nginx/common/no-cache.conf; # turn off caching for endpoint
+    }
+
+    include  /etc/nginx/common/general.conf;
+}

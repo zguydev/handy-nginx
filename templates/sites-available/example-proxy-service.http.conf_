@@ -1,0 +1,20 @@
+# This configuration defines an example service proxy via HTTP.
+#
+# Required env vars: X_HTTP_EXAMPLE_SERVICE_ADDR, X_SERVER_NAME.
+
+upstream  example_service {
+    server  ${X_HTTP_EXAMPLE_SERVICE_ADDR};
+}
+
+server {
+    listen       80;
+    server_name  ${X_SERVER_NAME};
+
+    location /api/ {
+        proxy_pass  http://example_service;
+
+        include  common/proxy-params.conf;
+    }
+
+    include  common/general.conf;
+}
